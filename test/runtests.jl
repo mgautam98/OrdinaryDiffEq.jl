@@ -3,7 +3,7 @@ const LONGER_TESTS = false
 
 const GROUP = get(ENV, "GROUP", "All")
 const is_APPVEYOR = Sys.iswindows() && haskey(ENV,"APPVEYOR")
-const is_TRAVIS = haskey(ENV,"TRAVIS")
+const is_CI = haskey(ENV,"CI")
 
 #Start Test Script
 
@@ -113,7 +113,7 @@ end
 if !is_APPVEYOR && (GROUP == "All" || GROUP == "Downstream")
   @time @safetestset "DelayDiffEq Tests" begin include("downstream/delaydiffeq.jl") end
   using Pkg
-  if is_TRAVIS
+  if is_CI
     using Pkg
     Pkg.add("DiffEqCallbacks")
     Pkg.add("DiffEqSensitivity")
@@ -123,7 +123,7 @@ if !is_APPVEYOR && (GROUP == "All" || GROUP == "Downstream")
 end
 
 if !is_APPVEYOR && GROUP == "ODEInterfaceRegression"
-  if is_TRAVIS
+  if is_CI
     using Pkg
     Pkg.add("ODEInterface")
     Pkg.add("ODEInterfaceDiffEq")
@@ -137,7 +137,10 @@ if !is_APPVEYOR && GROUP == "Multithreading"
 end
 
 if !is_APPVEYOR && GROUP == "GPU"
-  @time @safetestset "Simple GPU" begin
+    if is_CI
+        Pkg.add("CuArrays")
+    end
+    @time @safetestset "Simple GPU" begin
     import OrdinaryDiffEq
     include(joinpath(dirname(pathof(OrdinaryDiffEq.DiffEqBase)), "..", "test/gpu/simple_gpu.jl"))
   end
